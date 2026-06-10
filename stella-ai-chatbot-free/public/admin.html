@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stella Admin Overview</title>
+<link rel="stylesheet" href="/admin-style.css">
+</head>
+<body>
+<div class="container">
+  <h1 id="loginTitle" style="text-align:center; margin: 24px 0 12px;">Stella AI Chatbot Admin</h1>
+  <div id="securityBanner" class="security-banner hidden"></div>
+  <div id="topNav" class="nav hidden">
+    <a class="active" href="/admin">Overview</a>
+    <a href="/admin/settings">Settings</a>
+    <a href="/admin/faqs">FAQs</a>
+    <a href="/admin/logs">Logs</a>
+    <button id="logoutBtn" class="btn logout" type="button">Logout</button>
+  </div>
+
+    <div id="authLoading" class="card" style="max-width:400px; margin: 40px auto; text-align:center;">
+    <h2>Loading Admin</h2>
+    <p style="color: var(--muted); margin: 0;">Checking your admin session...</p>
+  </div>
+  <div id="login" class="card hidden" style="max-width:400px; margin: 40px auto;">
+    <h2>Sign In</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div>
+        <label>Username</label>
+        <input id="u" autocomplete="username" placeholder="Username">
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="p" type="password" autocomplete="current-password" placeholder="Password">
+      </div>
+      <button id="loginBtn" class="btn btn-primary" style="width: 100%;">Login</button>
+    </div>
+    <p id="loginMsg" class="msg"></p>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0;">Quick Stats</h2>
+        <span id="ovEdition" style="font-size: 11px; font-weight: 700; background: var(--accent); color: var(--brand); padding: 4px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em;">free</span>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Total FAQs</span>
+          <p id="ovFaqs" class="stat-value">0</p>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Active Sessions</span>
+          <p id="ovSessions" class="stat-value">0</p>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Total Messages</span>
+          <p id="ovMessages" class="stat-value">0</p>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Total Leads</span>
+          <p id="ovLeads" class="stat-value">0</p>
+        </div>
+        <div class="stat">
+          <span class="stat-label">FAQ Limit</span>
+          <p id="ovLimit" class="stat-value" style="font-size: 24px;">Unlimited</p>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="grid">
+      <div class="col-6 card">
+        <h2>Top Matched Keywords</h2>
+        <div class="table-wrap table-fit">
+          <table><thead><tr><th>Keyword</th><th>Total</th></tr></thead><tbody id="topMatchedRows"></tbody></table>
+        </div>
+      </div>
+      <div class="col-6 card">
+        <h2>Top Unmatched Questions</h2>
+        <div class="table-wrap table-fit">
+          <table><thead><tr><th>Message</th><th>Total</th></tr></thead><tbody id="topUnmatchedRows"></tbody></table>
+        </div>
+      </div>
+      <div class="col-12 card">
+        <h2>Last 7 Days Trend</h2>
+        <div class="table-wrap">
+          <table><thead><tr><th>Day</th><th>Total</th><th>Matched</th></tr></thead><tbody id="trendRows"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script nonce="__CSP_NONCE__">
+let csrfToken = "";
+function esc(v) {
+  return String(v || "").replace(/[&<>"']/g, function(c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[c];
+  });
+}
+function setMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text || "";
+  el.className = "msg " + (text ? (ok ? "ok" : "error") : "");
+  if (ok && text) {
+    setTimeout(function() {
+      if (el.textContent === text) {
+        el.textContent = "";
+        el.className = "msg";
+      }
+    }, 10000);
+  }
+}
+async function api(path, opts) {
+  const headers = Object.assign({ "Content-Type": "application/json" }, (opts && opts.headers) || {});
+  const method = String((opts && opts.method) || "GET").toUpperCase();
+  const needsCsrf = (path.startsWith("/api/admin/") && path !== "/api/admin/login" && path !== "/api/admin/csrf" && method !== "GET" && method !== "HEAD" && method !== "OPTIONS");
+  if (needsCsrf && csrfToken) headers["X-CSRF-Token"] = csrfToken;
+  const r = await fetch(path, Object.assign({}, opts || {}, { headers, credentials: "same-origin" }));
+  const j = await r.json().catch(function(){ return { success: false, message: "Invalid response" }; });
+  if (r.status === 401) {
+    csrfToken = "";
+    document.getElementById("topNav").classList.add("hidden");
+    document.getElementById("app").classList.add("hidden");
+    document.getElementById("authLoading").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
+  }
+  return j;
+}
+function fillRows(id, rows, keyField) {
+  const body = document.getElementById(id);
+  body.innerHTML = "";
+  if (!rows.length) {
+    body.innerHTML = "<tr><td colspan='2'>No data yet.</td></tr>";
+    return;
+  }
+  rows.forEach(function(row) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + esc(row[keyField]) + "</td><td>" + Number(row.total || 0) + "</td>";
+    body.appendChild(tr);
+  });
+}
+async function loadOverview() {
+  const j = await api("/api/admin/overview");
+  if (!j.success) return;
+  const d = j.data || {};
+  document.getElementById("ovFaqs").textContent = d.faqCount || 0;
+  document.getElementById("ovSessions").textContent = d.sessions || 0;
+  document.getElementById("ovMessages").textContent = d.messages || 0;
+  document.getElementById("ovLeads").textContent = d.leads || 0;
+  document.getElementById("ovLimit").textContent = d.faqLimit == null ? "Unlimited" : d.faqLimit;
+  document.getElementById("ovEdition").textContent = d.edition || "free";
+  const analytics = d.analytics || {};
+  fillRows("topMatchedRows", analytics.topMatched || [], "matchedKeyword");
+  fillRows("topUnmatchedRows", analytics.topUnmatched || [], "userMessage");
+  const trendRows = document.getElementById("trendRows");
+  const trend = analytics.trend || [];
+  trendRows.innerHTML = "";
+  if (!trend.length) {
+    trendRows.innerHTML = "<tr><td colspan='3'>No trend data yet.</td></tr>";
+    return;
+  }
+  trend.forEach(function(row) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + esc(row.day) + "</td><td>" + Number(row.total || 0) + "</td><td>" + Number(row.matched || 0) + "</td>";
+    trendRows.appendChild(tr);
+  });
+}
+async function loadSecurityStatus() {
+  const j = await api("/api/admin/security/status");
+  if (!j.success) return;
+  const d = j.data || {};
+  const banner = document.getElementById("securityBanner");
+  if (d.readyForProduction) {
+    banner.classList.add("hidden");
+    banner.textContent = "";
+    return;
+  }
+  banner.classList.remove("hidden");
+  const issues = Array.isArray(d.issues) ? d.issues.join("; ") : "";
+  banner.textContent = (d.message || "Security warning.") + (issues ? (" Issues: " + issues) : "");
+}
+async function submitLogin() {
+  const j = await api("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: document.getElementById("u").value, password: document.getElementById("p").value })
+  });
+  if (!j.success) return setMsg("loginMsg", j.message || "Login failed", false);
+  csrfToken = String(j.csrfToken || "");
+  document.getElementById("topNav").classList.remove("hidden");
+  document.getElementById("authLoading").classList.add("hidden");
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  setMsg("loginMsg", "", true);
+  loadSecurityStatus();
+  loadOverview();
+}
+document.getElementById("loginBtn").onclick = submitLogin;
+["u", "p"].forEach(function(id) {
+  document.getElementById(id).addEventListener("keydown", function(ev) {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      submitLogin();
+    }
+  });
+});
+async function bootstrapAdmin() {
+  const j = await api("/api/admin/csrf");
+  if (!j.success || !j.data || !j.data.csrfToken) {
+    document.getElementById("authLoading").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
+    return;
+  }
+  csrfToken = String(j.data.csrfToken || "");
+  document.getElementById("topNav").classList.remove("hidden");
+  document.getElementById("authLoading").classList.add("hidden");
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  loadSecurityStatus();
+  loadOverview();
+}
+document.getElementById("logoutBtn").onclick = async function() {
+  await api("/api/admin/logout", { method: "POST" });
+  csrfToken = "";
+  document.getElementById("securityBanner").classList.add("hidden");
+  document.getElementById("topNav").classList.add("hidden");
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("authLoading").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
+  window.location.href = "/admin";
+};
+bootstrapAdmin();
+</script>
+<div style="text-align:center; padding: 12px 0 18px; font-size: 13px; color: #64748b;">
+  Powered by <a href="https://mariastellatech.com" target="_blank" rel="noopener noreferrer" style="color:#175cd3; text-decoration:none;">mariastellatech.com</a>
+</div>
+</body>
+</html>

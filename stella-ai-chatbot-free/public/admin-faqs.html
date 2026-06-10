@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stella Admin FAQs</title>
+<link rel="stylesheet" href="/admin-style.css">
+</head>
+<body>
+<div class="container">
+  <h1 style="text-align:center; margin: 24px 0 12px;">Stella AI Chatbot Admin</h1>
+  <div id="securityBanner" class="security-banner hidden"></div>
+  <div id="topNav" class="nav hidden">
+    <a href="/admin">Overview</a>
+    <a href="/admin/settings">Settings</a>
+    <a class="active" href="/admin/faqs">FAQs</a>
+    <a href="/admin/logs">Logs</a>
+    <button id="logoutBtn" class="btn logout" type="button">Logout</button>
+  </div>
+
+    <div id="authLoading" class="card hidden" style="max-width:400px; margin: 40px auto; text-align:center;">
+    <h2>Loading Admin</h2>
+    <p style="color: var(--muted); margin: 0;">Checking your admin session...</p>
+  </div>
+  <div id="login" class="card hidden" style="max-width:400px; margin: 40px auto;">
+    <h2>Sign In</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div>
+        <label>Username</label>
+        <input id="u" autocomplete="username" placeholder="Username">
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="p" type="password" autocomplete="current-password" placeholder="Password">
+      </div>
+      <button id="loginBtn" class="btn btn-primary" style="width: 100%;">Login</button>
+    </div>
+    <p id="loginMsg" class="msg"></p>
+  </div>
+
+  <div id="app">
+    <div class="card">
+      <h2 id="faqFormTitle">Add FAQ</h2>
+      <div class="grid">
+        <div class="col-6">
+          <label for="categorySelect">Category</label>
+          <select id="categorySelect"></select>
+        </div>
+        <div class="col-6">
+          <label for="keyword">Keyword (must be unique)</label>
+          <input id="keyword" placeholder="unique-keyword">
+        </div>
+        <div class="col-6">
+          <label for="question">Question</label>
+          <input id="question">
+        </div>
+        <div class="col-6">
+          <label for="answer">Answer</label>
+          <input id="answer">
+        </div>
+      </div>
+      <div style="margin-top: 20px; display: flex; gap: 8px;">
+        <button id="saveFaq" class="btn btn-primary">Add FAQ</button>
+        <button id="cancelEdit" class="btn hidden">Cancel Edit</button>
+      </div>
+      <p id="faqMsg" class="msg"></p>
+    </div>
+
+    <div class="card">
+      <h2>Import FAQs From File</h2>
+      <p style="font-size:12px;color:#64748b;margin-bottom:14px;">Upload <code>.txt</code>, <code>.csv</code>, <code>.csb</code>, or <code>.docx</code> with question/answer pairs.</p>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;margin:0 0 14px;font-size:12px;line-height:1.55;color:#334155;">
+        <div style="font-weight:700;margin-bottom:6px;">Sample formats</div>
+        <div><code>question:answer:keyword:category</code> (set delimiter <code>:</code>)</div>
+        <div><code>question,answer,keyword,category</code> (set delimiter <code>,</code> or use CSV)</div>
+        <div><code>Q: What is Stella AI?</code> then <code>A: Stella AI is ...</code></div>
+        <div><code>What is Stella AI?|Stella AI is ...</code> (pipe format)</div>
+      </div>
+      <div class="grid">
+        <div class="col-6">
+          <label for="importCategoryMode">Category Handling</label>
+          <select id="importCategoryMode">
+            <option value="create_missing">Create category from file if missing</option>
+            <option value="selected_only">Always use selected category</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label for="importCategorySelect">Selected/Fallback Category</label>
+          <select id="importCategorySelect"></select>
+        </div>
+        <div class="col-6">
+          <label for="faqImportFile">FAQ File</label>
+          <input id="faqImportFile" type="file" accept=".txt,.csv,.csb,.docx">
+        </div>
+        <div class="col-6">
+          <label for="importDelimiter">Delimiter (optional)</label>
+          <input id="importDelimiter" placeholder="Example: : or | or ; or \t for tab">
+        </div>
+        <div class="col-6">
+          <label for="importDuplicateStrategy">Duplicate Keyword Handling</label>
+          <select id="importDuplicateStrategy">
+            <option value="skip">Ignore Question (Skip duplicate keyword)</option>
+            <option value="suffix">Add Suffix to Keyword</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top: 16px;">
+        <button id="importFaqFile" class="btn btn-primary">Import File</button>
+      </div>
+      <p id="faqImportMsg" class="msg"></p>
+    </div>
+
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="margin: 0;">FAQ List (<span id="faqCount">0</span>)</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="faqPrev" class="btn" type="button">Prev</button>
+          <span id="faqPageInfo" style="font-size:13px;color:#64748b;font-weight:500;">Page 1/1</span>
+          <button id="faqNext" class="btn" type="button">Next</button>
+        </div>
+      </div>
+      <div class="table-wrap faq-desktop-table">
+        <table>
+          <thead><tr><th>Category</th><th>Keyword</th><th>Question</th><th>Answer</th><th>Actions</th></tr></thead>
+          <tbody id="faqRows"></tbody>
+        </table>
+      </div>
+      <div id="faqMobileRows" class="faq-mobile-list"></div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:16px;">
+        <button id="faqPrevBottom" class="btn" type="button">Prev</button>
+        <span id="faqPageInfoBottom" style="font-size:13px;color:#64748b;font-weight:500;">Page 1/1</span>
+        <button id="faqNextBottom" class="btn" type="button">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script nonce="__CSP_NONCE__">
+let csrfToken = "";
+let categories = [];
+let editingFaqId = "";
+let faqPage = 1;
+let faqPages = 1;
+let faqPageSize = 20;
+function esc(v) {
+  return String(v || "").replace(/[&<>"']/g, function(c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[c];
+  });
+}
+function setMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text || "";
+  el.className = "msg " + (text ? (ok ? "ok" : "error") : "");
+  if (ok && text) {
+    setTimeout(function() {
+      if (el.textContent === text) {
+        el.textContent = "";
+        el.className = "msg";
+      }
+    }, 10000);
+  }
+}
+function setImportSummary(data) {
+  const d = data || {};
+  const added = Number(d.imported || 0);
+  const rejected = Number(d.rejected || 0);
+  const duplicates = Number(d.duplicates || 0);
+  const unique = Number(d.uniqueKeywords || 0);
+  const categoriesAdded = Number(d.categoriesAdded || 0);
+  const mode = String(d.duplicateStrategy || "suffix");
+  const el = document.getElementById("faqImportMsg");
+  el.className = "msg";
+  el.innerHTML =
+    "<span style='color:#16a34a;font-weight:700;'>Added: " + added + "</span> | " +
+    "<span style='color:#dc2626;font-weight:700;'>Rejected: " + rejected + "</span> | " +
+    "<span style='color:#16a34a;'>Categories Added: " + categoriesAdded + "</span> | " +
+    "<span style='color:#dc2626;'>Duplicate Keywords: " + duplicates + "</span> | " +
+    "<span style='color:#16a34a;'>Unique Keywords: " + unique + "</span> | " +
+    "<span style='color:#64748b;'>Mode: " + esc(mode) + "</span>";
+}
+async function api(path, opts) {
+  const headers = Object.assign({ "Content-Type": "application/json" }, (opts && opts.headers) || {});
+  const method = String((opts && opts.method) || "GET").toUpperCase();
+  const needsCsrf = (path.startsWith("/api/admin/") && path !== "/api/admin/login" && path !== "/api/admin/csrf" && method !== "GET" && method !== "HEAD" && method !== "OPTIONS");
+  if (needsCsrf && csrfToken) headers["X-CSRF-Token"] = csrfToken;
+  const r = await fetch(path, Object.assign({}, opts || {}, { headers, credentials: "same-origin" }));
+  const j = await r.json().catch(function(){ return { success: false, message: "Invalid response" }; });
+  if (r.status === 401) {
+    csrfToken = "";
+    window.location.href = "/admin";
+    return { success: false, message: "Unauthorized" };
+  }
+  return j;
+}
+async function loadSecurityStatus() {
+  const j = await api("/api/admin/security/status");
+  if (!j.success) return;
+  const d = j.data || {};
+  const banner = document.getElementById("securityBanner");
+  if (d.readyForProduction) {
+    banner.classList.add("hidden");
+    banner.textContent = "";
+    return;
+  }
+  banner.classList.remove("hidden");
+  const issues = Array.isArray(d.issues) ? d.issues.join("; ") : "";
+  banner.textContent = (d.message || "Security warning.") + (issues ? (" Issues: " + issues) : "");
+}
+function resetForm() {
+  editingFaqId = "";
+  document.getElementById("faqFormTitle").textContent = "Add FAQ";
+  document.getElementById("saveFaq").textContent = "Add FAQ";
+  document.getElementById("cancelEdit").classList.add("hidden");
+  document.getElementById("keyword").value = "";
+  document.getElementById("question").value = "";
+  document.getElementById("answer").value = "";
+}
+function bindFaqEdit(row) {
+  editingFaqId = row.id;
+  document.getElementById("faqFormTitle").textContent = "Edit FAQ";
+  document.getElementById("saveFaq").textContent = "Update FAQ";
+  document.getElementById("cancelEdit").classList.remove("hidden");
+  document.getElementById("keyword").value = row.keyword || "";
+  document.getElementById("question").value = row.question || "";
+  document.getElementById("answer").value = row.answer || "";
+  renderCategoryDropdown(row.categoryId || "");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+async function deleteFaqById(id, rowsInPageLength) {
+  if (!confirm("Delete this FAQ? This action cannot be undone.")) return;
+  const resp = await api("/api/admin/faqs/" + encodeURIComponent(id), { method: "DELETE" });
+  if (!resp.success) return setMsg("faqMsg", resp.message || "Delete failed.", false);
+  setMsg("faqMsg", "FAQ deleted.", true);
+  if (faqPage > 1 && Number(rowsInPageLength || 0) === 1) faqPage -= 1;
+  getFaqs();
+}
+function renderCategoryDropdown(selectedCategoryId) {
+  const targets = [document.getElementById("categorySelect"), document.getElementById("importCategorySelect")];
+  targets.forEach(function(sel) {
+    if (!sel) return;
+    sel.innerHTML = "";
+    if (!categories.length) {
+      sel.innerHTML = "<option value=''>No categories available</option>";
+      return;
+    }
+    if (sel.id === "importCategorySelect") {
+      const any = document.createElement("option");
+      any.value = "";
+      any.textContent = "Use category from file / none";
+      sel.appendChild(any);
+    }
+    categories.forEach(function(cat) {
+      const opt = document.createElement("option");
+      opt.value = cat.id;
+      opt.textContent = cat.name;
+      if (selectedCategoryId && selectedCategoryId === cat.id && sel.id === "categorySelect") opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+}
+async function loadCategories() {
+  const j = await api("/api/admin/categories");
+  if (!j.success) return;
+  categories = j.data || [];
+  renderCategoryDropdown("");
+}
+async function loadAdminPageSize() {
+  const j = await api("/api/admin/settings");
+  if (!j.success) return;
+  faqPageSize = Math.max(5, Math.min(200, Number((j.data || {}).adminPageSize || 20)));
+}
+async function getFaqs() {
+  const j = await api("/api/admin/faqs?page=" + encodeURIComponent(faqPage) + "&limit=" + encodeURIComponent(faqPageSize));
+  if (!j.success) return;
+  const rows = j.data || [];
+  const meta = j.meta || {};
+  faqPage = Number(meta.page || 1);
+  faqPages = Number(meta.pages || 1);
+  document.getElementById("faqCount").textContent = Number(meta.total || rows.length);
+  document.getElementById("faqPageInfo").textContent = "Page " + faqPage + " / " + faqPages;
+  document.getElementById("faqPageInfoBottom").textContent = "Page " + faqPage + " / " + faqPages;
+  document.getElementById("faqPrev").disabled = faqPage <= 1;
+  document.getElementById("faqNext").disabled = faqPage >= faqPages;
+  document.getElementById("faqPrevBottom").disabled = faqPage <= 1;
+  document.getElementById("faqNextBottom").disabled = faqPage >= faqPages;
+  const body = document.getElementById("faqRows");
+  const mobile = document.getElementById("faqMobileRows");
+  body.innerHTML = "";
+  mobile.innerHTML = "";
+  if (!rows.length) {
+    body.innerHTML = "<tr><td colspan='5'>No FAQs yet.</td></tr>";
+    mobile.innerHTML = "<div class='faq-mobile-card'><div class='faq-mobile-value'>No FAQs yet.</div></div>";
+    return;
+  }
+  rows.forEach(function(row) {
+    const tr = document.createElement("tr");
+    tr.innerHTML =
+      "<td>" + esc(row.categoryName) + "</td>" +
+      "<td>" + esc(row.keyword) + "</td>" +
+      "<td>" + esc(row.question) + "</td>" +
+      "<td>" + esc(row.answer) + "</td>" +
+      "<td><button type='button' class='btn' style='padding: 6px 10px; font-size: 12px;'>Edit</button> <button type='button' class='btn' style='padding: 6px 10px; font-size: 12px; color: var(--bad);'>Delete</button></td>";
+    const editBtn = tr.querySelectorAll("button")[0];
+    const deleteBtn = tr.querySelectorAll("button")[1];
+    editBtn.onclick = function() { bindFaqEdit(row); };
+    deleteBtn.onclick = async function() { await deleteFaqById(row.id, rows.length); };
+    body.appendChild(tr);
+
+    const card = document.createElement("div");
+    card.className = "faq-mobile-card";
+    card.innerHTML =
+      "<div class='faq-mobile-row'><span class='faq-mobile-label'>Category</span><div class='faq-mobile-value'>" + esc(row.categoryName) + "</div></div>" +
+      "<div class='faq-mobile-row'><span class='faq-mobile-label'>Keyword</span><div class='faq-mobile-value'>" + esc(row.keyword) + "</div></div>" +
+      "<div class='faq-mobile-row'><span class='faq-mobile-label'>Question</span><div class='faq-mobile-value'>" + esc(row.question) + "</div></div>" +
+      "<div class='faq-mobile-row'><span class='faq-mobile-label'>Answer</span><div class='faq-mobile-value'>" + esc(row.answer) + "</div></div>" +
+      "<div class='faq-mobile-actions'><button type='button' class='btn'>Edit</button><button type='button' class='btn' style='color: var(--bad);'>Delete</button></div>";
+    const cardEdit = card.querySelectorAll("button")[0];
+    const cardDelete = card.querySelectorAll("button")[1];
+    cardEdit.onclick = function() { bindFaqEdit(row); };
+    cardDelete.onclick = async function() { await deleteFaqById(row.id, rows.length); };
+    mobile.appendChild(card);
+  });
+}
+document.getElementById("faqPrev").onclick = function() {
+  if (faqPage <= 1) return;
+  faqPage -= 1;
+  getFaqs();
+};
+document.getElementById("faqNext").onclick = function() {
+  if (faqPage >= faqPages) return;
+  faqPage += 1;
+  getFaqs();
+};
+document.getElementById("faqPrevBottom").onclick = function() {
+  if (faqPage <= 1) return;
+  faqPage -= 1;
+  getFaqs();
+};
+document.getElementById("faqNextBottom").onclick = function() {
+  if (faqPage >= faqPages) return;
+  faqPage += 1;
+  getFaqs();
+};
+document.getElementById("cancelEdit").onclick = function() {
+  resetForm();
+  renderCategoryDropdown("");
+};
+document.getElementById("saveFaq").onclick = async function() {
+  if (!categories.length) return setMsg("faqMsg", "Please create categories first from Settings page.", false);
+  const payload = {
+    categoryId: document.getElementById("categorySelect").value,
+    keyword: document.getElementById("keyword").value.trim(),
+    question: document.getElementById("question").value.trim(),
+    answer: document.getElementById("answer").value.trim()
+  };
+  const method = editingFaqId ? "PUT" : "POST";
+  const path = editingFaqId ? ("/api/admin/faqs/" + encodeURIComponent(editingFaqId)) : "/api/admin/faqs";
+  const j = await api(path, { method: method, body: JSON.stringify(payload) });
+  if (!j.success) return setMsg("faqMsg", j.message || "Failed to save FAQ.", false);
+  setMsg("faqMsg", editingFaqId ? "FAQ updated successfully." : "FAQ added successfully.", true);
+  resetForm();
+  renderCategoryDropdown("");
+  faqPage = 1;
+  getFaqs();
+};
+document.getElementById("importFaqFile").onclick = async function() {
+  const input = document.getElementById("faqImportFile");
+  const file = input.files && input.files[0];
+  if (!file) return setMsg("faqImportMsg", "Please select a file.", false);
+  const fd = new FormData();
+  fd.append("file", file);
+  fd.append("categoryMode", document.getElementById("importCategoryMode").value || "create_missing");
+  fd.append("categoryId", document.getElementById("importCategorySelect").value || "");
+  fd.append("delimiter", document.getElementById("importDelimiter").value || "");
+  fd.append("duplicateStrategy", document.getElementById("importDuplicateStrategy").value || "skip");
+  const headers = {};
+  if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+  const r = await fetch("/api/admin/faqs/import", { method: "POST", body: fd, headers, credentials: "same-origin" });
+  const j = await r.json().catch(function(){ return { success: false, message: "Invalid response" }; });
+  if (!j.success) return setMsg("faqImportMsg", j.message || "Import failed.", false);
+  setImportSummary(j.data || {});
+  input.value = "";
+  faqPage = 1;
+  getFaqs();
+};
+document.getElementById("loginBtn").onclick = async function() {
+  const j = await api("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: document.getElementById("u").value, password: document.getElementById("p").value })
+  });
+  if (!j.success) return setMsg("loginMsg", j.message || "Login failed", false);
+  csrfToken = String(j.csrfToken || "");
+  document.getElementById("topNav").classList.remove("hidden");
+  document.getElementById("authLoading").classList.add("hidden");
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  setMsg("loginMsg", "", true);
+  loadSecurityStatus();
+  await loadAdminPageSize();
+  await loadCategories();
+  getFaqs();
+};
+async function bootstrapAdmin() {
+  const j = await api("/api/admin/csrf");
+  if (!j.success || !j.data || !j.data.csrfToken) {
+    window.location.href = "/admin";
+    return;
+  }
+  csrfToken = String(j.data.csrfToken || "");
+  document.getElementById("topNav").classList.remove("hidden");
+  loadSecurityStatus();
+  loadAdminPageSize().then(function(){ return loadCategories(); }).then(getFaqs);
+}
+document.getElementById("logoutBtn").onclick = async function() {
+  await api("/api/admin/logout", { method: "POST" });
+  csrfToken = "";
+  document.getElementById("securityBanner").classList.add("hidden");
+  document.getElementById("topNav").classList.add("hidden");
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("authLoading").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
+  window.location.href = "/admin";
+};
+bootstrapAdmin();
+</script>
+</body>
+</html>

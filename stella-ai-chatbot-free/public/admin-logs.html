@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stella Admin Logs</title>
+<link rel="stylesheet" href="/admin-style.css">
+</head>
+<body>
+<div class="container">
+  <h1 style="text-align:center; margin: 24px 0 12px;">Stella AI Chatbot Admin</h1>
+  <div id="securityBanner" class="security-banner hidden"></div>
+  <div id="topNav" class="nav hidden">
+    <a href="/admin">Overview</a>
+    <a href="/admin/settings">Settings</a>
+    <a href="/admin/faqs">FAQs</a>
+    <a class="active" href="/admin/logs">Logs</a>
+    <button id="logoutBtn" class="btn logout" type="button">Logout</button>
+  </div>
+
+    <div id="authLoading" class="card hidden" style="max-width:400px; margin: 40px auto; text-align:center;">
+    <h2>Loading Admin</h2>
+    <p style="color: var(--muted); margin: 0;">Checking your admin session...</p>
+  </div>
+  <div id="login" class="card hidden" style="max-width:400px; margin: 40px auto;">
+    <h2>Sign In</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div>
+        <label>Username</label>
+        <input id="u" autocomplete="username" placeholder="Username">
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="p" type="password" autocomplete="current-password" placeholder="Password">
+      </div>
+      <button id="loginBtn" class="btn btn-primary" style="width: 100%;">Login</button>
+    </div>
+    <p id="loginMsg" class="msg"></p>
+  </div>
+
+  <div id="app">
+    <div style="margin-bottom: 24px;">
+      <div class="card" style="margin-bottom: 0;">
+        <h2 style="border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 20px;">Filter Sessions</h2>
+        <div class="filters">
+          <div><label>Session Key</label><input id="filterSession" placeholder="Search Session Key"></div>
+          <div><label>Name</label><input id="filterName" placeholder="Search Name"></div>
+          <div><label>Email</label><input id="filterEmail" placeholder="Search Email"></div>
+          <div><button id="clearFilters" class="btn" style="width: 100%;">Clear Filters</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="margin: 0;">Sessions</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="sessionsPrev" class="btn" type="button">Prev</button>
+          <span id="sessionsPageInfo" style="font-size:13px;color:#64748b;font-weight:500;">Page 1/1</span>
+          <button id="sessionsNext" class="btn" type="button">Next</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Session Key</th><th>Name</th><th>Email</th><th>Messages</th><th>Started</th><th>Updated</th><th>Action</th></tr></thead>
+          <tbody id="sessionsRows"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:16px;">
+        <button id="sessionsPrevBottom" class="btn" type="button">Prev</button>
+        <span id="sessionsPageInfoBottom" style="font-size:13px;color:#64748b;font-weight:500;">Page 1/1</span>
+        <button id="sessionsNextBottom" class="btn" type="button">Next</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h2 id="chatTitle" style="margin:0">Chat Messages (Select a session)</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="hideChatBtn" class="btn hidden" type="button">Hide Chat</button>
+          <button id="messagesPrev" class="btn" type="button">Prev</button>
+          <span id="messagesPageInfo" style="font-size:13px;color:#64748b;font-weight:500;">Page 1/1</span>
+          <button id="messagesNext" class="btn" type="button">Next</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>User Message</th><th>Bot Response</th><th>Source</th></tr></thead>
+          <tbody id="messagesRows"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:16px;">
+        <button id="messagesPrevBottom" class="btn" type="button">Prev</button>
+        <span id="messagesPageInfoBottom" style="font-size:13px;color:#64748b;font-weight:500;">Page 1/1</span>
+        <button id="messagesNextBottom" class="btn" type="button">Next</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="margin: 0;">Leads</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="leadsPrev" class="btn" type="button">Prev</button>
+          <span id="leadsPageInfo" style="font-size:13px;color:#64748b;font-weight:500;">Page 1/1</span>
+          <button id="leadsNext" class="btn" type="button">Next</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Session</th><th>Name</th><th>Email</th></tr></thead>
+          <tbody id="leadsRows"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:16px;">
+        <button id="leadsPrevBottom" class="btn" type="button">Prev</button>
+        <span id="leadsPageInfoBottom" style="font-size:13px;color:#64748b;font-weight:500;">Page 1/1</span>
+        <button id="leadsNextBottom" class="btn" type="button">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script nonce="__CSP_NONCE__">
+let csrfToken = "";
+let selectedSessionKey = "";
+let sessionsPage = 1, messagesPage = 1, leadsPage = 1;
+let sessionsPages = 1, messagesPages = 1, leadsPages = 1;
+let logsPageSize = 20;
+function esc(v){return String(v||"").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c];});}
+function fmtDate(v){
+  const d = new Date(String(v || ""));
+  if (Number.isNaN(d.getTime())) return String(v || "");
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+function setMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  el.textContent = text || "";
+  el.className = "msg " + (text ? (ok ? "ok" : "error") : "");
+  if (ok && text) {
+    setTimeout(function() {
+      if (el.textContent === text) {
+        el.textContent = "";
+        el.className = "msg";
+      }
+    }, 10000);
+  }
+}
+async function api(path, opts) {
+  const headers = Object.assign({ "Content-Type": "application/json" }, (opts && opts.headers) || {});
+  const method = String((opts && opts.method) || "GET").toUpperCase();
+  const needsCsrf = (path.startsWith("/api/admin/") && path !== "/api/admin/login" && path !== "/api/admin/csrf" && method !== "GET" && method !== "HEAD" && method !== "OPTIONS");
+  if (needsCsrf && csrfToken) headers["X-CSRF-Token"] = csrfToken;
+  const r = await fetch(path, Object.assign({}, opts || {}, { headers, credentials: "same-origin" }));
+  const j = await r.json().catch(function(){ return { success: false, message: "Invalid response" }; });
+  if (r.status === 401) {
+    csrfToken = "";
+    window.location.href = "/admin";
+    return { success: false, message: "Unauthorized" };
+  }
+  return j;
+}
+async function loadSecurityStatus() {
+  const j = await api("/api/admin/security/status");
+  if (!j.success) return;
+  const d = j.data || {};
+  const banner = document.getElementById("securityBanner");
+  if (d.readyForProduction) {
+    banner.classList.add("hidden");
+    banner.textContent = "";
+    return;
+  }
+  banner.classList.remove("hidden");
+  const issues = Array.isArray(d.issues) ? d.issues.join("; ") : "";
+  banner.textContent = (d.message || "Security warning.") + (issues ? (" Issues: " + issues) : "");
+}
+function fillRows(id, html){document.getElementById(id).innerHTML=html||"<tr><td colspan='7'>No data</td></tr>";}
+function readFilters() {
+  return {
+    session: String(document.getElementById("filterSession").value || "").trim().toLowerCase(),
+    name: String(document.getElementById("filterName").value || "").trim().toLowerCase(),
+    email: String(document.getElementById("filterEmail").value || "").trim().toLowerCase()
+  };
+}
+function renderSessionMessagesTitle(sessionKey) {
+  document.getElementById("chatTitle").textContent = sessionKey ? ("Chat Messages - " + sessionKey) : "Chat Messages (Select a session)";
+  document.getElementById("hideChatBtn").classList.toggle("hidden", !sessionKey);
+}
+async function loadLogs() {
+  const f = readFilters();
+  const qs = new URLSearchParams({
+    sessionsPage: String(sessionsPage),
+    messagesPage: String(messagesPage),
+    leadsPage: String(leadsPage),
+    sessionsLimit: String(logsPageSize),
+    messagesLimit: String(logsPageSize),
+    leadsLimit: String(logsPageSize),
+    filterSession: f.session,
+    filterName: f.name,
+    filterEmail: f.email,
+    sessionKey: selectedSessionKey
+  });
+  const j = await api("/api/admin/logs?" + qs.toString());
+  if (!j.success) return;
+  const d = j.data || {};
+  const m = j.meta || {};
+  logsPageSize = Number(m.defaultPageSize || logsPageSize);
+  sessionsPage = Number((m.sessions || {}).page || sessionsPage);
+  messagesPage = Number((m.messages || {}).page || messagesPage);
+  leadsPage = Number((m.leads || {}).page || leadsPage);
+  sessionsPages = Number((m.sessions || {}).pages || 1);
+  messagesPages = Number((m.messages || {}).pages || 1);
+  leadsPages = Number((m.leads || {}).pages || 1);
+
+  const sessions = d.sessions || [];
+  const messages = d.messages || [];
+  const leads = d.leads || [];
+
+  fillRows("sessionsRows", sessions.map(function(s){
+    return "<tr><td>"+esc(s.sessionKey)+"</td><td>"+esc(s.leadName)+"</td><td>"+esc(s.leadEmail)+"</td><td>"+Number(s.totalMessages||0)+"</td><td>"+esc(fmtDate(s.startedAt))+"</td><td>"+esc(fmtDate(s.updatedAt))+"</td><td><button class='btn show-chat' style='padding: 6px 10px; font-size: 12px;' data-session='"+esc(s.sessionKey)+"'>Show Chat</button></td></tr>";
+  }).join(""));
+
+  renderSessionMessagesTitle(selectedSessionKey);
+  if (!selectedSessionKey) {
+    fillRows("messagesRows", "<tr><td colspan='4'>Select a session and click Show Chat.</td></tr>");
+  } else if (!messages.length) {
+    fillRows("messagesRows", "<tr><td colspan='4'>No chat messages for this session.</td></tr>");
+  } else {
+    fillRows("messagesRows", messages.map(function(mRow){
+      return "<tr><td>"+esc(fmtDate(mRow.createdAt))+"</td><td>"+esc(mRow.userMessage)+"</td><td>"+esc(mRow.botResponse)+"</td><td>"+esc(mRow.source)+"</td></tr>";
+    }).join(""));
+  }
+
+  fillRows("leadsRows", leads.map(function(l){
+    return "<tr><td>"+esc(fmtDate(l.createdAt))+"</td><td>"+esc(l.sessionKey)+"</td><td>"+esc(l.name)+"</td><td>"+esc(l.email)+"</td></tr>";
+  }).join(""));
+
+  document.getElementById("sessionsPageInfo").textContent = "Page " + sessionsPage + " / " + sessionsPages;
+  document.getElementById("sessionsPageInfoBottom").textContent = "Page " + sessionsPage + " / " + sessionsPages;
+  document.getElementById("messagesPageInfo").textContent = "Page " + messagesPage + " / " + messagesPages;
+  document.getElementById("messagesPageInfoBottom").textContent = "Page " + messagesPage + " / " + messagesPages;
+  document.getElementById("leadsPageInfo").textContent = "Page " + leadsPage + " / " + leadsPages;
+  document.getElementById("leadsPageInfoBottom").textContent = "Page " + leadsPage + " / " + leadsPages;
+  document.getElementById("sessionsPrev").disabled = sessionsPage <= 1;
+  document.getElementById("sessionsNext").disabled = sessionsPage >= sessionsPages;
+  document.getElementById("sessionsPrevBottom").disabled = sessionsPage <= 1;
+  document.getElementById("sessionsNextBottom").disabled = sessionsPage >= sessionsPages;
+  document.getElementById("messagesPrev").disabled = messagesPage <= 1 || !selectedSessionKey;
+  document.getElementById("messagesNext").disabled = messagesPage >= messagesPages || !selectedSessionKey;
+  document.getElementById("messagesPrevBottom").disabled = messagesPage <= 1 || !selectedSessionKey;
+  document.getElementById("messagesNextBottom").disabled = messagesPage >= messagesPages || !selectedSessionKey;
+  document.getElementById("leadsPrev").disabled = leadsPage <= 1;
+  document.getElementById("leadsNext").disabled = leadsPage >= leadsPages;
+  document.getElementById("leadsPrevBottom").disabled = leadsPage <= 1;
+  document.getElementById("leadsNextBottom").disabled = leadsPage >= leadsPages;
+}
+["filterSession","filterName","filterEmail"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", function(){ sessionsPage = 1; loadLogs(); });
+});
+document.getElementById("clearFilters").onclick = function() {
+  document.getElementById("filterSession").value = "";
+  document.getElementById("filterName").value = "";
+  document.getElementById("filterEmail").value = "";
+  sessionsPage = 1;
+  loadLogs();
+};
+document.getElementById("hideChatBtn").onclick = function() { selectedSessionKey = ""; messagesPage = 1; loadLogs(); };
+document.getElementById("sessionsRows").addEventListener("click", function(ev) {
+  const el = ev.target;
+  if (!(el instanceof HTMLElement)) return;
+  if (!el.classList.contains("show-chat")) return;
+  selectedSessionKey = String(el.getAttribute("data-session") || "");
+  messagesPage = 1;
+  loadLogs();
+});
+document.getElementById("sessionsPrev").onclick = function(){ if(sessionsPage<=1) return; sessionsPage -= 1; loadLogs(); };
+document.getElementById("sessionsNext").onclick = function(){ if(sessionsPage>=sessionsPages) return; sessionsPage += 1; loadLogs(); };
+document.getElementById("sessionsPrevBottom").onclick = function(){ if(sessionsPage<=1) return; sessionsPage -= 1; loadLogs(); };
+document.getElementById("sessionsNextBottom").onclick = function(){ if(sessionsPage>=sessionsPages) return; sessionsPage += 1; loadLogs(); };
+document.getElementById("messagesPrev").onclick = function(){ if(messagesPage<=1||!selectedSessionKey) return; messagesPage -= 1; loadLogs(); };
+document.getElementById("messagesNext").onclick = function(){ if(messagesPage>=messagesPages||!selectedSessionKey) return; messagesPage += 1; loadLogs(); };
+document.getElementById("messagesPrevBottom").onclick = function(){ if(messagesPage<=1||!selectedSessionKey) return; messagesPage -= 1; loadLogs(); };
+document.getElementById("messagesNextBottom").onclick = function(){ if(messagesPage>=messagesPages||!selectedSessionKey) return; messagesPage += 1; loadLogs(); };
+document.getElementById("leadsPrev").onclick = function(){ if(leadsPage<=1) return; leadsPage -= 1; loadLogs(); };
+document.getElementById("leadsNext").onclick = function(){ if(leadsPage>=leadsPages) return; leadsPage += 1; loadLogs(); };
+document.getElementById("leadsPrevBottom").onclick = function(){ if(leadsPage<=1) return; leadsPage -= 1; loadLogs(); };
+document.getElementById("leadsNextBottom").onclick = function(){ if(leadsPage>=leadsPages) return; leadsPage += 1; loadLogs(); };
+document.getElementById("loginBtn").onclick = async function() {
+  const j = await api("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: document.getElementById("u").value, password: document.getElementById("p").value })
+  });
+  if (!j.success) return setMsg("loginMsg", j.message || "Login failed", false);
+  csrfToken = String(j.csrfToken || "");
+  document.getElementById("topNav").classList.remove("hidden");
+  document.getElementById("authLoading").classList.add("hidden");
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  setMsg("loginMsg", "", true);
+  loadSecurityStatus();
+  loadLogs();
+};
+async function bootstrapAdmin() {
+  const j = await api("/api/admin/csrf");
+  if (!j.success || !j.data || !j.data.csrfToken) {
+    window.location.href = "/admin";
+    return;
+  }
+  csrfToken = String(j.data.csrfToken || "");
+  document.getElementById("topNav").classList.remove("hidden");
+  loadSecurityStatus();
+  loadLogs();
+}
+document.getElementById("logoutBtn").onclick = async function() {
+  await api("/api/admin/logout", { method: "POST" });
+  csrfToken = "";
+  document.getElementById("securityBanner").classList.add("hidden");
+  document.getElementById("topNav").classList.add("hidden");
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("authLoading").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
+  window.location.href = "/admin";
+};
+bootstrapAdmin();
+</script>
+</body>
+</html>

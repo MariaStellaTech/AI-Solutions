@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stella Admin Settings</title>
+<link rel="stylesheet" href="/admin-style.css">
+<style>
+.live-preview-wrap { margin-top: 20px; border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.03); }
+.live-preview-label { margin: 0 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.live-preview-label::before { content: ""; display: inline-block; width: 8px; height: 8px; background: var(--ok); border-radius: 50%; }
+
+.live-fixed-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 9999; font-family: 'Inter', system-ui, sans-serif; --live-brand: #6366f1; }
+.live-fixed-wrap.left { left: 24px; right: auto; }
+.live-fixed-wrap.right { right: 24px; left: auto; }
+
+.live-avatar { position: relative; width: 56px; height: 56px; border: none; background: #fff; padding: 0; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; }
+.live-avatar:hover { transform: scale(1.08); }
+.live-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+.live-avatar svg { width: 50%; height: 50%; fill: var(--live-brand); }
+
+.live-panel { 
+  position: absolute; 
+  bottom: calc(100% + 16px); 
+  width: 320px; 
+  height: min(500px, 70vh); 
+  border-radius: 20px; 
+  border: 1px solid rgba(226, 232, 240, 0.8); 
+  background: rgba(255, 255, 255, 0.95); 
+  backdrop-filter: blur(12px); 
+  -webkit-backdrop-filter: blur(12px); 
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); 
+  display: flex; 
+  flex-direction: column; 
+  overflow: hidden; 
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+}
+.live-fixed-wrap.right .live-panel { right: 0; }
+.live-fixed-wrap.left .live-panel { left: 0; }
+
+@media (max-width: 400px) {
+  .live-panel { width: calc(100vw - 48px); }
+}
+.live-header { background: var(--live-brand); color: #fff; padding: 16px 20px; font-size: 15px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.live-close { background: rgba(255, 255, 255, 0.2); border: none; color: #fff; border-radius: 8px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; }
+.live-close:hover { background: rgba(255, 255, 255, 0.3); }
+
+.live-messages { flex: 1; padding: 20px; background: #f8fafc; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+.live-msg { max-width: 85%; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.live-msg.bot { background: #fff; border: 1px solid #e2e8f0; color: #0f172a; border-bottom-left-radius: 4px; }
+.live-msg.user { margin-left: auto; background: var(--live-brand); color: #fff; border-bottom-right-radius: 4px; }
+
+.live-footer { border-top: 1px solid #e2e8f0; padding: 10px 12px; font-size: 12px; color: var(--muted); background: #fff; }
+.live-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.live-chip, .live-back-btn {
+  border: 1px solid var(--live-brand);
+  background: #fff;
+  color: var(--live-brand);
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.live-chip:hover, .live-back-btn:hover {
+  background: var(--live-brand);
+  color: #fff;
+}
+.live-chip.more { background: #f8fafc; color: #334155; border-color: #e2e8f0; }
+.live-back-btn { margin-top: 8px; display: inline-block; }
+.live-lead {
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 12px;
+}
+.live-lead p { margin: 0 0 8px; color: #334155; font-size: 13px; }
+.live-lead input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  margin-bottom: 8px;
+  background: #fff;
+}
+.live-lead button {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--live-brand);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: default;
+}
+.live-input-wrap {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+.live-input-wrap input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+}
+.live-send-btn {
+  background: var(--live-brand);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: default;
+}
+
+.anim-float { animation: liveFloat 3s ease-in-out infinite; }
+.anim-pulse { animation: livePulse 2s ease-in-out infinite; }
+.anim-shake { animation: liveShake 2.5s ease-in-out infinite; }
+@keyframes liveFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes livePulse { 0%,100% { transform: scale(1); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); } 50% { transform: scale(1.05); box-shadow: 0 25px 40px -10px rgba(99, 102, 241, 0.35); } }
+@keyframes liveShake { 0%,100% { transform: rotate(0); } 10%, 30%, 50%, 70%, 90% { transform: rotate(-4deg); } 20%, 40%, 60%, 80% { transform: rotate(4deg); } }
+@keyframes liveShake { 0%,100% { transform: rotate(0); } 10%, 30%, 50%, 70%, 90% { transform: rotate(-4deg); } 20%, 40%, 60%, 80% { transform: rotate(4deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1 style="text-align:center; margin: 24px 0 12px;">Stella AI Chatbot Admin</h1>
+  <div id="securityBanner" class="security-banner hidden"></div>
+  <div id="topNav" class="nav hidden">
+    <a href="/admin">Overview</a>
+    <a class="active" href="/admin/settings">Settings</a>
+    <a href="/admin/faqs">FAQs</a>
+    <a href="/admin/logs">Logs</a>
+    <button id="logoutBtn" class="btn logout" type="button">Logout</button>
+  </div>
+
+    <div id="authLoading" class="card hidden" style="max-width:400px; margin: 40px auto; text-align:center;">
+    <h2>Loading Admin</h2>
+    <p style="color: var(--muted); margin: 0;">Checking your admin session...</p>
+  </div>
+  <div id="login" class="card hidden" style="max-width:400px; margin: 40px auto;">
+    <h2>Sign In</h2>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div>
+        <label>Username</label>
+        <input id="u" autocomplete="username" placeholder="Username">
+      </div>
+      <div>
+        <label>Password</label>
+        <input id="p" type="password" autocomplete="current-password" placeholder="Password">
+      </div>
+      <button id="loginBtn" class="btn btn-primary" style="width: 100%;">Login</button>
+    </div>
+    <p id="loginMsg" class="msg"></p>
+  </div>
+
+  <div id="app">
+    <div class="card">
+      <h2 style="border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 24px;">Core Identity</h2>
+      <div class="grid">
+        <div class="col-12" style="background: var(--accent); padding: 12px; border-radius: 10px;">
+          <div class="inline">
+            <input id="showLivePreview" type="checkbox" checked>
+            <label for="showLivePreview" style="margin:0; font-weight: 600;">Show Live Preview</label>
+          </div>
+          <p id="livePreviewHint" style="margin: 8px 0 0 28px; font-size: 12px; color: var(--muted);">Live demo runs as a fixed widget (like frontend). Scroll the page to verify position.</p>
+        </div>
+        <div class="col-6">
+          <label for="chatbotName">Chatbot Name</label>
+          <input id="chatbotName" placeholder="e.g. Stella Assistant">
+        </div>
+        <div class="col-6">
+          <label for="avatarShape">Avatar Shape</label>
+          <select id="avatarShape">
+            <option value="round">Round / Circle</option>
+            <option value="square">Square / Rounded Rect</option>
+          </select>
+        </div>
+        <div class="col-8">
+          <label for="avatarFile">Update Avatar Image</label>
+          <input id="avatarFile" type="file" accept="image/*">
+          <input id="avatarUrl" type="hidden">
+          <p style="font-size: 12px; color: var(--muted); margin-top: 8px;">Recommended: 512x512px. Max 1MB.</p>
+        </div>
+        <div class="col-4" style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--accent); border-radius: 12px; padding: 16px;">
+          <label style="margin-bottom: 12px;">Avatar Preview</label>
+          <img id="avatarPreview" class="avatar-preview round" alt="avatar preview">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 24px;">Messaging & Engagement</h2>
+      <div class="grid">
+        <div class="col-6">
+          <label for="welcomeMessage">Welcome Message</label>
+          <textarea id="welcomeMessage" placeholder="The first thing users see..."></textarea>
+        </div>
+        <div class="col-6">
+          <label for="noMatchMessage">No Match Message</label>
+          <textarea id="noMatchMessage" placeholder="When no answer is found..."></textarea>
+        </div>
+        <div class="col-12" style="background: var(--accent); padding: 16px; border-radius: 12px;">
+          <p style="margin: 0 0 10px; font-size: 12px; color: var(--muted);">
+            Fuzzy Match helps answer similar keywords or full questions even when they are not exact matches.
+          </p>
+          <div class="grid">
+            <div class="col-6 inline">
+              <input id="fuzzyMatchEnabled" type="checkbox">
+              <label for="fuzzyMatchEnabled" style="margin:0; font-weight: 600;">Enable Fuzzy Match</label>
+            </div>
+            <div class="col-6">
+              <label for="fuzzyMatchThreshold">Fuzzy Match Threshold (%) (45-95)</label>
+              <input id="fuzzyMatchThreshold" type="number" min="45" max="95" step="1" value="60">
+            </div>
+          </div>
+        </div>
+        <div class="col-12" style="background: var(--accent); padding: 16px; border-radius: 12px;">
+          <div class="inline" style="margin-bottom: 12px;">
+            <input id="leadCaptureEnabled" type="checkbox">
+            <label for="leadCaptureEnabled" style="margin:0; font-weight: 600;">Enable Lead Capture</label>
+          </div>
+          <label for="leadCapturePrompt">Lead Capture Prompt</label>
+          <textarea id="leadCapturePrompt" style="background: #fff;"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 24px;">Widget Appearance</h2>
+      <div class="grid">
+        <div class="col-4 inline">
+          <input id="showWidget" type="checkbox">
+          <label for="showWidget" style="margin:0; font-weight: 600;">Show Widget</label>
+        </div>
+        <div class="col-4">
+          <label for="widgetPosition">Desktop Position</label>
+          <select id="widgetPosition">
+            <option value="right">Bottom Right</option>
+            <option value="left">Bottom Left</option>
+          </select>
+        </div>
+        <div class="col-4">
+          <label for="widgetAnimation">Attention Effect</label>
+          <select id="widgetAnimation">
+            <option value="float">Floating</option>
+            <option value="pulse">Pulse Glow</option>
+            <option value="shake">Wiggle Shake</option>
+            <option value="none">None (Static)</option>
+          </select>
+        </div>
+        <div class="col-4">
+          <label for="widgetSize">Widget Diameter (px) (36-120)</label>
+          <input id="widgetSize" type="number" min="36" max="120" step="1">
+        </div>
+        <div class="col-4">
+          <label for="brandColor">Brand Accent Color</label>
+          <input id="brandColor" type="color" style="height: 42px; padding: 4px; cursor: pointer;">
+        </div>
+        <div class="col-4">
+          <label for="chatboxBgColor">Panel Background</label>
+          <input id="chatboxBgColor" type="color" style="height: 42px; padding: 4px; cursor: pointer;">
+        </div>
+        <div class="col-12">
+           <div class="grid">
+              <div class="col-6 inline">
+                <input id="showWelcomeCategories" type="checkbox">
+                <label for="showWelcomeCategories" style="margin:0">Show Categories After Welcome</label>
+              </div>
+              <div class="col-6 inline">
+                <input id="showReturnToCategoriesLink" type="checkbox">
+                <label for="showReturnToCategoriesLink" style="margin:0">Show "Back to Categories" link</label>
+              </div>
+           </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 24px;">System & Performance</h2>
+      <div class="grid">
+        <div class="col-4">
+          <label for="adminPageSize">Items Per Page (5-200)</label>
+          <input id="adminPageSize" type="number" min="5" max="200" step="1">
+        </div>
+        <div class="col-4">
+          <label for="logRetentionDays">Log Retention (Days) (1-3650)</label>
+          <input id="logRetentionDays" type="number" min="1" max="3650" step="1">
+        </div>
+        <div class="col-4 inline" style="padding-top: 28px;">
+          <input id="autoCleanupEnabled" type="checkbox">
+          <label for="autoCleanupEnabled" style="margin:0; font-weight: 600;">Auto Cleanup</label>
+        </div>
+        <div class="col-12" style="background: var(--accent); padding: 16px; border-radius: 12px;">
+          <p style="margin: 0 0 10px; font-size: 12px; color: var(--muted);">
+            Enable security controls one by one and verify your deployment after each change.
+          </p>
+          <div class="grid">
+            <div class="col-6 inline">
+              <input id="enforceHttps" type="checkbox">
+              <label for="enforceHttps" style="margin:0; font-weight: 600;">Enforce HTTPS (non-localhost)</label>
+            </div>
+            <div class="col-6 inline">
+              <input id="enforceAdminCsrf" type="checkbox">
+              <label for="enforceAdminCsrf" style="margin:0; font-weight: 600;">Enforce Admin CSRF</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Categories</h2>
+      <div class="grid">
+        <div class="col-8">
+          <label for="newCategoryName">Add Category</label>
+          <input id="newCategoryName" placeholder="Category name">
+        </div>
+        <div class="col-4" style="display:flex;align-items:end">
+          <button id="addCategoryBtn" class="btn" style="width: 100%;">Add Category</button>
+        </div>
+        <div class="col-12">
+          <label>Recommended Categories (select up to 3)</label>
+          <div id="categoryRows" class="cat-list"></div>
+          <p id="categoryHint" class="msg"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Embed Code</h2>
+      <div class="grid">
+        <div class="col-12">
+          <label for="apiBase">API Base URL</label>
+          <input id="apiBase" placeholder="https://your-chatbot-domain.com">
+        </div>
+        <div class="col-12">
+          <label for="widgetAllowedDomains">Allowed Widget Domains (optional)</label>
+          <textarea id="widgetAllowedDomains" placeholder="example.com&#10;www.example.com&#10;https://partner.example.org" style="min-height:92px;"></textarea>
+          <p class="help">If set, widget loads and chat API calls are allowed only from these domains. Use one domain/origin per line. Leave empty to allow all domains.</p>
+        </div>
+        <div class="col-12">
+          <label for="widgetDomainPolicy">Widget Domain Policy</label>
+          <select id="widgetDomainPolicy">
+            <option value="restricted">Restricted (Recommended)</option>
+            <option value="open">Open (Allow all domains)</option>
+          </select>
+          <p class="help">`Restricted` blocks widget/API usage unless allowed domains are configured.</p>
+        </div>
+        <div class="col-12">
+          <label for="embedCode">Copy and paste into your frontend HTML</label>
+          <textarea id="embedCode" readonly style="font-family: monospace; background: #fdfefe;"></textarea>
+        </div>
+      </div>
+      <div style="margin-top: 16px; display: flex; gap: 8px;">
+        <button id="regenerateCode" class="btn">Regenerate Code</button>
+        <button id="copyCode" class="btn btn-primary">Copy Code</button>
+      </div>
+      <p id="codeMsg" class="msg"></p>
+    </div>
+    <div style="position: sticky; bottom: 20px; z-index: 100; margin-top: 14px;">
+      <button id="saveSettings" class="btn btn-primary" style="width: 100%; height: 50px; font-size: 16px; box-shadow: var(--shadow-lg);">Save Configuration</button>
+      <p id="settingsMsg" class="msg" style="background: #fff; padding: 10px; border-radius: 8px; box-shadow: var(--shadow); text-align: center;"></p>
+    </div>
+  </div>
+</div>
+<div id="liveDock" class="live-fixed-wrap right hidden">
+  <div id="livePanel" class="live-panel">
+    <div id="liveHeader" class="live-header">
+      <span>Stella Assistant</span>
+      <button id="liveCloseBtn" class="live-close" type="button">&times;</button>
+    </div>
+    <div id="liveMessages" class="live-messages"></div>
+    <div class="live-input-wrap">
+      <input type="text" placeholder="Type a message..." disabled>
+      <button type="button" class="live-send-btn">Send</button>
+    </div>
+  </div>
+  <button id="liveAvatarBtn" class="live-avatar anim-float" type="button">
+    <svg id="liveAvatarSvg" style="display:none;" viewBox="0 0 24 24"><path d="M20,2H4C2.9,2,2,2.9,2,4v18l4-4h14c1.1,0,2-0.9,2-2V4C22,2.9,21.1,2,20,2z M20,16H5.2L4,17.2V4h16V16z M7,9h10v2H7V9z M7,6h10v2H7V6z M7,12h7v2H7V12z"/></svg>
+    <img id="liveAvatarImg" alt="live avatar" style="display:none;">
+  </button>
+</div>
+<script nonce="__CSP_NONCE__">
+let csrfToken = "";
+let allCategories = [];
+let selectedWelcomeCategories = [];
+let livePanelOpen = true;
+const STD_WELCOME = "Welcome to Stella Assistant. How can I help you today?";
+const STD_NO_MATCH = "Sorry, I could not find an exact answer to that.\nPlease try a different keyword or choose one of the suggested questions below.";
+function setMsg(id, text, ok) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text || "";
+  el.className = "msg " + (text ? (ok ? "ok" : "error") : "");
+  el.style.display = text ? "block" : "none";
+  if (ok && text) {
+    setTimeout(function() {
+      if (el.textContent === text) {
+        el.textContent = "";
+        el.className = "msg";
+        el.style.display = "none";
+      }
+    }, 10000);
+  }
+}
+async function withBtnLoading(buttonId, loadingText, runner) {
+  const btn = document.getElementById(buttonId);
+  if (!btn) return runner();
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.classList.add("is-loading");
+  if (loadingText) btn.textContent = loadingText;
+  try {
+    return await runner();
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove("is-loading");
+    btn.textContent = originalText;
+  }
+}
+async function api(path, opts) {
+  const headers = Object.assign({ "Content-Type": "application/json" }, (opts && opts.headers) || {});
+  const method = String((opts && opts.method) || "GET").toUpperCase();
+  const needsCsrf = (path.startsWith("/api/admin/") && path !== "/api/admin/login" && path !== "/api/admin/csrf" && method !== "GET" && method !== "HEAD" && method !== "OPTIONS");
+  if (needsCsrf && csrfToken) headers["X-CSRF-Token"] = csrfToken;
+  const r = await fetch(path, Object.assign({}, opts || {}, { headers, credentials: "same-origin" }));
+  const j = await r.json().catch(function(){ return { success: false, message: "Invalid response" }; });
+  if (r.status === 401) {
+    csrfToken = "";
+    window.location.href = "/admin";
+    return { success: false, message: "Unauthorized" };
+  }
+  return j;
+}
+function buildEmbedCode() {
+  const apiBase = (document.getElementById("apiBase").value || window.location.origin).trim().replace(/\/+$/, "");
+  const scriptSrc = apiBase + "/widget.js";
+  const code = '<script src="' + scriptSrc + '" data-api-base="' + apiBase + '"></' + 'script>';
+  document.getElementById("embedCode").value = code;
+}
+async function loadSecurityStatus() {
+  const j = await api("/api/admin/security/status");
+  if (!j.success) return;
+  const d = j.data || {};
+  const banner = document.getElementById("securityBanner");
+  if (d.readyForProduction) {
+    banner.classList.add("hidden");
+    banner.textContent = "";
+    return;
+  }
+  banner.classList.remove("hidden");
+  const issues = Array.isArray(d.issues) ? d.issues.join("; ") : "";
+  const extras = [];
+  if (d.widgetDomainPolicy) extras.push("Widget Policy: " + d.widgetDomainPolicy);
+  if (d.cspMode) extras.push("CSP: " + d.cspMode);
+  banner.textContent = (d.message || "Security warning.")
+    + (issues ? (" Issues: " + issues) : "")
+    + (extras.length ? (" | " + extras.join(" | ")) : "");
+}
+function renderCategoryRows() {
+  const box = document.getElementById("categoryRows");
+  box.innerHTML = "";
+  if (!allCategories.length) {
+    box.innerHTML = "<div class='cat-row'><span>No categories yet.</span></div>";
+    setMsg("categoryHint", "", true);
+    return;
+  }
+  allCategories.forEach(function(cat) {
+    const checked = selectedWelcomeCategories.includes(cat.name);
+    const row = document.createElement("div");
+    row.className = "cat-row";
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = String(cat.name || "");
+    const actions = document.createElement("div");
+    actions.style.display = "flex";
+    actions.style.alignItems = "center";
+    actions.style.gap = "8px";
+    const label = document.createElement("label");
+    label.className = "inline";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.checked = !!checked;
+    label.appendChild(input);
+    label.appendChild(document.createTextNode(" Recommend"));
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "btn";
+    deleteBtn.style.padding = "4px 10px";
+    deleteBtn.style.fontSize = "12px";
+    deleteBtn.style.color = "var(--bad)";
+    deleteBtn.textContent = "Delete";
+    row.appendChild(nameSpan);
+    actions.appendChild(label);
+    actions.appendChild(deleteBtn);
+    row.appendChild(actions);
+    input.onchange = function(ev) {
+      if (ev.target.checked) {
+        if (selectedWelcomeCategories.length >= 3) {
+          ev.target.checked = false;
+          setMsg("categoryHint", "You can select only 3 recommended categories.", false);
+          return;
+        }
+        selectedWelcomeCategories.push(cat.name);
+      } else {
+        selectedWelcomeCategories = selectedWelcomeCategories.filter(function(x) { return x !== cat.name; });
+      }
+      setMsg("categoryHint", selectedWelcomeCategories.length + "/3 selected", true);
+    };
+    deleteBtn.onclick = async function() {
+      if (!confirm("Delete category \"" + String(cat.name || "") + "\"?")) return;
+      const j = await api("/api/admin/categories/" + encodeURIComponent(cat.id), { method: "DELETE" });
+      if (!j.success) return setMsg("categoryHint", j.message || "Unable to delete category.", false);
+      selectedWelcomeCategories = selectedWelcomeCategories.filter(function(x) { return x !== cat.name; });
+      await loadCategories();
+      setMsg("categoryHint", "Category deleted.", true);
+    };
+    box.appendChild(row);
+  });
+  setMsg("categoryHint", selectedWelcomeCategories.length + "/3 selected", true);
+}
+function syncAvatarPreview() {
+  const img = document.getElementById("avatarPreview");
+  if (!img) return;
+  const shape = document.getElementById("avatarShape").value === "square" ? "square" : "round";
+  img.className = "avatar-preview " + shape;
+  img.src = document.getElementById("avatarUrl").value || "";
+}
+function renderLiveWidgetPreview() {
+  const showLivePreview = !!document.getElementById("showLivePreview").checked;
+  const livePreviewHint = document.getElementById("livePreviewHint");
+  if (livePreviewHint) livePreviewHint.style.display = showLivePreview ? "block" : "none";
+  const name = document.getElementById("chatbotName").value.trim() || "Stella Assistant";
+  const avatarUrl = document.getElementById("avatarUrl").value || "";
+  const avatarShape = document.getElementById("avatarShape").value === "square" ? "square" : "round";
+  const showWidget = !!document.getElementById("showWidget").checked;
+  const position = document.getElementById("widgetPosition").value === "left" ? "left" : "right";
+  const animation = (document.getElementById("widgetAnimation").value || "float").toLowerCase();
+  const size = Math.max(36, Math.min(120, Number(document.getElementById("widgetSize").value || 56)));
+  const bg = document.getElementById("chatboxBgColor").value || "#ffffff";
+  const brand = document.getElementById("brandColor").value || "#6366f1";
+  const welcome = (document.getElementById("welcomeMessage").value || STD_WELCOME).trim();
+  const noMatch = (document.getElementById("noMatchMessage").value || STD_NO_MATCH).trim();
+  const leadEnabled = !!document.getElementById("leadCaptureEnabled").checked;
+  const leadPrompt = (document.getElementById("leadCapturePrompt").value || "Before we continue, please share your name and email.").trim();
+  const showCats = !!document.getElementById("showWelcomeCategories").checked;
+  const showBack = !!document.getElementById("showReturnToCategoriesLink").checked;
+
+  const dock = document.getElementById("liveDock");
+  const panel = document.getElementById("livePanel");
+  const header = document.getElementById("liveHeader");
+  const avatarBtn = document.getElementById("liveAvatarBtn");
+  const avatarImg = document.getElementById("liveAvatarImg");
+  const messagesEl = document.getElementById("liveMessages");
+
+  if (!showLivePreview) {
+    dock.classList.add("hidden");
+    return;
+  }
+
+  dock.classList.remove("left", "right", "hidden");
+  dock.classList.add(position === "left" ? "left" : "right");
+  dock.style.setProperty('--live-brand', brand);
+  messagesEl.style.background = bg;
+  panel.style.display = showWidget && livePanelOpen ? "flex" : "none";
+  avatarBtn.style.display = showWidget ? "grid" : "none";
+  if (!showWidget) dock.classList.add("hidden");
+  avatarBtn.style.width = size + "px";
+  avatarBtn.style.height = size + "px";
+  avatarBtn.style.borderRadius = avatarShape === "square" ? "10px" : "50%";
+  avatarBtn.classList.remove("anim-float", "anim-pulse", "anim-shake");
+  if (animation === "float" || animation === "pulse" || animation === "shake") avatarBtn.classList.add("anim-" + animation);
+
+  header.innerHTML = "";
+  const headerTitle = document.createElement("span");
+  headerTitle.textContent = name;
+  const headerBtn = document.createElement("button");
+  headerBtn.id = "liveCloseBtn";
+  headerBtn.className = "live-close";
+  headerBtn.type = "button";
+  headerBtn.innerHTML = "&times;";
+  header.appendChild(headerTitle);
+  header.appendChild(headerBtn);
+  const svg = document.getElementById("liveAvatarSvg");
+  if (avatarUrl) {
+    avatarImg.src = avatarUrl;
+    avatarImg.style.display = "block";
+    if (svg) svg.style.display = "none";
+  } else {
+    avatarImg.style.display = "none";
+    if (svg) svg.style.display = "block";
+  }
+
+  const esc = function(v) {
+    return String(v || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  };
+  const previewCategories = (selectedWelcomeCategories && selectedWelcomeCategories.length)
+    ? selectedWelcomeCategories.slice(0, 3)
+    : allCategories.slice(0, 3).map(function(c) { return c.name; });
+  const hasMoreCategories = showCats && allCategories.length > 3;
+  const catHtml = showCats
+    ? "<div class='live-msg bot'><div>Please choose a category:</div><div class='live-suggestions'>" +
+        previewCategories.map(function(cat) {
+          return "<button type='button' class='live-chip'>" + esc(cat) + "</button>";
+        }).join("") +
+        (hasMoreCategories ? "<button type='button' class='live-chip more'>More</button>" : "") +
+      "</div></div>"
+    : "";
+  const leadHtml = leadEnabled
+    ? "<div class='live-msg bot'><div>" + esc(leadPrompt) + "</div><div class='live-lead'>" +
+        "<input type='text' placeholder='Your name' disabled>" +
+        "<input type='email' placeholder='Your email' disabled>" +
+        "<button type='button' disabled>Continue</button>" +
+      "</div></div>"
+    : "";
+  const backHtml = showBack ? "<div class='live-msg bot'><button type='button' class='live-back-btn'>Back to categories</button></div>" : "";
+  messagesEl.innerHTML =
+    "<div class='live-msg bot'>" + esc(welcome) + "</div>" +
+    catHtml +
+    leadHtml +
+    "<div class='live-msg user'>Live preview of your chat layout.</div>" +
+    "<div class='live-msg bot'>" + esc(noMatch) + "</div>" +
+    backHtml;
+  const closeBtn = document.getElementById("liveCloseBtn");
+  if (closeBtn) {
+    closeBtn.onclick = function() {
+      livePanelOpen = false;
+      renderLiveWidgetPreview();
+    };
+  }
+}
+async function loadCategories() {
+  const j = await api("/api/admin/categories");
+  if (!j.success) return;
+  allCategories = (j.data || []).map(function(c) { return { id: c.id, name: c.name }; });
+  renderCategoryRows();
+}
+async function loadSettings() {
+  const j = await api("/api/admin/settings");
+  if (!j.success) return;
+  const s = j.data || {};
+  document.getElementById("showLivePreview").checked = (typeof s.showLivePreview === "boolean") ? s.showLivePreview : true;
+  document.getElementById("chatbotName").value = s.chatbotName || "";
+  document.getElementById("avatarUrl").value = s.avatarUrl || "";
+  document.getElementById("avatarShape").value = (s.avatarShape === "square") ? "square" : "round";
+  const welcomeValue = String(s.welcomeMessage || "").trim();
+  const noMatchValue = String(s.noMatchMessage || "").trim();
+  document.getElementById("welcomeMessage").value = (!welcomeValue || /^welcome$/i.test(welcomeValue)) ? STD_WELCOME : welcomeValue;
+  document.getElementById("noMatchMessage").value = (!noMatchValue || /^no\s*match$/i.test(noMatchValue)) ? STD_NO_MATCH : noMatchValue;
+  document.getElementById("showWidget").checked = !!s.showWidget;
+  document.getElementById("widgetPosition").value = (s.widgetPosition === "left") ? "left" : "right";
+  document.getElementById("widgetSize").value = Number(s.widgetSize || 56);
+  document.getElementById("chatboxBgColor").value = s.chatboxBgColor || "#ffffff";
+  document.getElementById("brandColor").value = s.brandColor || "#6366f1";
+  document.getElementById("widgetAnimation").value = s.widgetAnimation || "float";
+  const fuzzyRaw = Number(s.fuzzyMatchThreshold);
+  const legacyFuzzyDefault = s.fuzzyMatchEnabled === false && (Number.isNaN(fuzzyRaw) || fuzzyRaw === 62);
+  document.getElementById("fuzzyMatchEnabled").checked = legacyFuzzyDefault ? true : ((typeof s.fuzzyMatchEnabled === "boolean") ? s.fuzzyMatchEnabled : true);
+  document.getElementById("fuzzyMatchThreshold").value = legacyFuzzyDefault ? 60 : Math.max(45, Math.min(95, Number.isFinite(fuzzyRaw) ? fuzzyRaw : 60));
+  document.getElementById("leadCaptureEnabled").checked = !!s.leadCaptureEnabled;
+  document.getElementById("leadCapturePrompt").value = s.leadCapturePrompt || "Before we continue, please share your name and email.";
+  document.getElementById("logRetentionDays").value = Number(s.logRetentionDays || 180);
+  document.getElementById("adminPageSize").value = Number(s.adminPageSize || 20);
+  document.getElementById("autoCleanupEnabled").checked = !!s.autoCleanupEnabled;
+  document.getElementById("enforceHttps").checked = !!s.enforceHttps;
+  document.getElementById("enforceAdminCsrf").checked = (typeof s.enforceAdminCsrf === "boolean") ? s.enforceAdminCsrf : true;
+  document.getElementById("showWelcomeCategories").checked = !!s.showWelcomeCategories;
+  document.getElementById("showReturnToCategoriesLink").checked = !!s.showReturnToCategoriesLink;
+  document.getElementById("widgetAllowedDomains").value = Array.isArray(s.widgetAllowedDomains) ? s.widgetAllowedDomains.join("\n") : "";
+  document.getElementById("widgetDomainPolicy").value = (String(s.widgetDomainPolicy || "open").toLowerCase() === "restricted") ? "restricted" : "open";
+  selectedWelcomeCategories = Array.isArray(s.welcomeCategories) ? s.welcomeCategories.slice(0, 3) : [];
+  document.getElementById("apiBase").value = window.location.origin;
+  syncAvatarPreview();
+  await loadCategories();
+  buildEmbedCode();
+}
+document.getElementById("avatarShape").onchange = syncAvatarPreview;
+document.getElementById("avatarFile").onchange = function(ev) {
+  const file = ev.target.files && ev.target.files[0];
+  if (!file) return;
+  if (!/^image\//i.test(file.type || "")) {
+    setMsg("settingsMsg", "Please select an image file.", false);
+    return;
+  }
+  if (file.size > 1024 * 1024) {
+    setMsg("settingsMsg", "Avatar must be 1MB or smaller.", false);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function() {
+    document.getElementById("avatarUrl").value = String(reader.result || "");
+    syncAvatarPreview();
+    renderLiveWidgetPreview();
+  };
+  reader.readAsDataURL(file);
+};
+document.getElementById("addCategoryBtn").onclick = async function() {
+  await withBtnLoading("addCategoryBtn", "Adding...", async function() {
+    const name = document.getElementById("newCategoryName").value.trim();
+    if (!name) return setMsg("categoryHint", "Category name is required.", false);
+    const j = await api("/api/admin/categories", { method: "POST", body: JSON.stringify({ name: name }) });
+    if (!j.success) return setMsg("categoryHint", j.message || "Unable to add category.", false);
+    document.getElementById("newCategoryName").value = "";
+    await loadCategories();
+    setMsg("categoryHint", "Category added.", true);
+  });
+};
+document.getElementById("regenerateCode").onclick = buildEmbedCode;
+document.getElementById("copyCode").onclick = async function() {
+  await withBtnLoading("copyCode", "Copying...", async function() {
+    buildEmbedCode();
+    const text = document.getElementById("embedCode").value;
+    try {
+      await navigator.clipboard.writeText(text);
+      setMsg("codeMsg", "Embed code copied.", true);
+    } catch {
+      setMsg("codeMsg", "Copy failed. Please copy manually.", false);
+    }
+  });
+};
+document.getElementById("saveSettings").onclick = async function() {
+  await withBtnLoading("saveSettings", "Saving...", async function() {
+    const payload = {
+      showLivePreview: document.getElementById("showLivePreview").checked,
+      chatbotName: document.getElementById("chatbotName").value.trim(),
+      avatarUrl: document.getElementById("avatarUrl").value.trim(),
+      avatarShape: document.getElementById("avatarShape").value,
+      welcomeMessage: document.getElementById("welcomeMessage").value,
+      noMatchMessage: document.getElementById("noMatchMessage").value,
+      showWidget: document.getElementById("showWidget").checked,
+      widgetPosition: document.getElementById("widgetPosition").value,
+      widgetSize: Number(document.getElementById("widgetSize").value || 56),
+      chatboxBgColor: document.getElementById("chatboxBgColor").value,
+      brandColor: document.getElementById("brandColor").value,
+      widgetAnimation: document.getElementById("widgetAnimation").value,
+      fuzzyMatchEnabled: document.getElementById("fuzzyMatchEnabled").checked,
+      fuzzyMatchThreshold: Number(document.getElementById("fuzzyMatchThreshold").value || 60),
+      leadCaptureEnabled: document.getElementById("leadCaptureEnabled").checked,
+      leadCapturePrompt: document.getElementById("leadCapturePrompt").value,
+      logRetentionDays: Number(document.getElementById("logRetentionDays").value || 180),
+      adminPageSize: Number(document.getElementById("adminPageSize").value || 20),
+      autoCleanupEnabled: document.getElementById("autoCleanupEnabled").checked,
+      enforceHttps: document.getElementById("enforceHttps").checked,
+      enforceAdminCsrf: document.getElementById("enforceAdminCsrf").checked,
+      showWelcomeCategories: document.getElementById("showWelcomeCategories").checked,
+      showReturnToCategoriesLink: document.getElementById("showReturnToCategoriesLink").checked,
+      widgetAllowedDomains: document.getElementById("widgetAllowedDomains").value,
+      widgetDomainPolicy: document.getElementById("widgetDomainPolicy").value,
+      managedCategories: allCategories.map(function(c) { return c.name; }),
+      welcomeCategories: selectedWelcomeCategories.slice(0, 3)
+    };
+    const j = await api("/api/admin/settings", { method: "POST", body: JSON.stringify(payload) });
+    setMsg("settingsMsg", j.success ? "Settings saved successfully." : (j.message || "Failed to save."), !!j.success);
+  });
+};
+["showLivePreview","chatbotName","avatarShape","welcomeMessage","noMatchMessage","showWidget","widgetPosition","widgetSize","chatboxBgColor","brandColor","widgetAnimation","fuzzyMatchEnabled","fuzzyMatchThreshold","leadCaptureEnabled","leadCapturePrompt","enforceHttps","enforceAdminCsrf","showWelcomeCategories","showReturnToCategoriesLink","widgetAllowedDomains","widgetDomainPolicy"].forEach(function(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener("input", renderLiveWidgetPreview);
+  el.addEventListener("change", renderLiveWidgetPreview);
+});
+document.getElementById("liveAvatarBtn").addEventListener("click", function() {
+  livePanelOpen = !livePanelOpen;
+  renderLiveWidgetPreview();
+});
+document.getElementById("loginBtn").onclick = async function() {
+  await withBtnLoading("loginBtn", "Signing in...", async function() {
+    const j = await api("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: document.getElementById("u").value, password: document.getElementById("p").value })
+    });
+    if (!j.success) return setMsg("loginMsg", j.message || "Login failed", false);
+    csrfToken = String(j.csrfToken || "");
+    document.getElementById("topNav").classList.remove("hidden");
+  document.getElementById("authLoading").classList.add("hidden");
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    setMsg("loginMsg", "", true);
+    loadSecurityStatus();
+    loadSettings().then(renderLiveWidgetPreview);
+  });
+};
+["u", "p"].forEach(function(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener("keydown", function(ev) {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      document.getElementById("loginBtn").click();
+    }
+  });
+});
+async function bootstrapAdmin() {
+  const j = await api("/api/admin/csrf");
+  if (!j.success || !j.data || !j.data.csrfToken) {
+    window.location.href = "/admin";
+    return;
+  }
+  csrfToken = String(j.data.csrfToken || "");
+  document.getElementById("topNav").classList.remove("hidden");
+  loadSecurityStatus();
+  loadSettings().then(renderLiveWidgetPreview);
+}
+document.getElementById("logoutBtn").onclick = async function() {
+  await api("/api/admin/logout", { method: "POST" });
+  csrfToken = "";
+  document.getElementById("securityBanner").classList.add("hidden");
+  document.getElementById("topNav").classList.add("hidden");
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("authLoading").classList.add("hidden");
+    document.getElementById("login").classList.remove("hidden");
+  window.location.href = "/admin";
+};
+bootstrapAdmin();
+</script>
+</body>
+</html>

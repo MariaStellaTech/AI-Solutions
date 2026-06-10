@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Install Stella AI Chatbot</title>
+<link rel="stylesheet" href="/admin-style.css">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0;">
+<div class="container" style="max-width: 500px;">
+  <div class="card" style="text-align: center;">
+    <h1>Installation</h1>
+    <p style="color: var(--muted); margin-bottom: 24px;">This will initialize the database and seed default categories and FAQs.</p>
+    <label for="installToken" style="display:block; text-align:left; margin-bottom:6px;">Install Token (optional/local)</label>
+    <input id="installToken" type="password" placeholder="Enter INSTALL_TOKEN if configured" style="width:100%; margin-bottom:8px;">
+    <p id="installWarn" class="msg error hidden" style="margin-top:0; margin-bottom:10px;">Public/remote install detected. Set <code>INSTALL_TOKEN</code> in <code>.env</code> and enter the same value here.</p>
+    <button id="install" class="btn btn-primary" style="width: 100%;">Run Installer</button>
+    <p id="msg" class="msg"></p>
+  </div>
+</div>
+<script nonce="__CSP_NONCE__">
+const tokenEl=document.getElementById('installToken');
+const warnEl=document.getElementById('installWarn');
+function updateInstallWarning(){
+  const host=String(window.location.hostname||'').toLowerCase();
+  const isLocal=(host==='localhost'||host==='127.0.0.1'||host==='::1');
+  const show=!isLocal && !tokenEl.value.trim();
+  warnEl.classList.toggle('hidden', !show);
+}
+tokenEl.addEventListener('input', updateInstallWarning);
+updateInstallWarning();
+document.getElementById('install').onclick=async function(){
+  const m=document.getElementById('msg');
+  const token=tokenEl.value.trim();
+  m.textContent='Installing...';
+  m.className='msg';
+  try {
+    const r=await fetch('/install',{method:'POST',headers:{'X-Install-Token':token}});
+    const j=await r.json();
+    if(j.success) {
+      m.textContent='Installation successful! Redirecting to admin...';
+      m.className='msg ok';
+      setTimeout(() => { window.location.href = '/admin'; }, 2000);
+    } else {
+      m.textContent='Failed: '+(j.message||'unknown');
+      m.className='msg error';
+    }
+  } catch(e) {
+    m.textContent='Connection error. Please check if the server is running.';
+    m.className='msg error';
+  }
+};
+</script>
+</body></html>

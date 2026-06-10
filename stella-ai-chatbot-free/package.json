@@ -1,0 +1,18 @@
+{
+  "name": "stella-ai-chatbot-free",
+  "version": "1.0.0",
+  "description": "Stella AI Chatbot standalone Stella AI Chatbot Free",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "morgan": "^1.10.0",
+    "mammoth": "^1.8.0",
+    "multer": "^2.0.0"
+  }
+}

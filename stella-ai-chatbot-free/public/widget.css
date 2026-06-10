@@ -1,0 +1,308 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+.stella-cb-widget {
+  position: fixed;
+  z-index: 999999;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --stella-brand: #6366f1;
+  --stella-brand-hover: #4f46e5;
+  --stella-bg: #ffffff;
+  --stella-text: #0f172a;
+  --stella-muted: #64748b;
+  --stella-panel-bg: rgba(255, 255, 255, 0.95);
+  --stella-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --stella-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.stella-cb-right { right: 24px; bottom: 24px; }
+.stella-cb-left { left: 24px; bottom: 24px; }
+.stella-cb-right .stella-cb-panel { right: 0; transform-origin: bottom right; }
+.stella-cb-left .stella-cb-panel { left: 0; transform-origin: bottom left; }
+
+.stella-cb-widget, .stella-cb-widget * {
+  box-sizing: border-box;
+  color: var(--stella-text);
+}
+
+/* Toggle Button */
+.stella-cb-toggle {
+  border: none;
+  background: #fff;
+  box-shadow: var(--stella-shadow-lg);
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stella-cb-toggle:hover {
+  transform: scale(1.1);
+}
+
+.stella-cb-toggle img {
+  display: block;
+  object-fit: cover;
+}
+
+/* Animations */
+.stella-cb-toggle.anim-float { animation: stellaFloat 3s ease-in-out infinite; }
+.stella-cb-toggle.anim-pulse { animation: stellaPulse 2s ease-in-out infinite; }
+.stella-cb-toggle.anim-shake { animation: stellaShake 2.5s ease-in-out infinite; }
+
+/* Panel */
+.stella-cb-panel {
+  position: absolute;
+  bottom: calc(100% + 16px);
+  width: 380px;
+  height: min(600px, 80vh);
+  background: var(--stella-panel-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--stella-shadow-lg);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.stella-cb-panel[style*="display: flex"] {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* Header */
+.stella-cb-header {
+  background: var(--stella-brand);
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+}
+
+.stella-cb-header strong {
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.stella-cb-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.stella-cb-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Messages Area */
+.stella-cb-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8fafc;
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}
+
+.stella-cb-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.stella-cb-messages::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+/* Individual Message */
+.stella-cb-msg {
+  max-width: 95%;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
+  animation: stellaMessageIn 0.3s ease-out forwards;
+}
+
+.stella-cb-msg.user {
+  margin-left: auto;
+  max-width: 85%;
+  background: var(--stella-brand);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.stella-cb-msg.bot {
+  width: 90%;
+  min-width: 90%;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+/* Input Area */
+.stella-cb-input-wrap {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  background: #fff;
+  border-top: 1px solid #e2e8f0;
+}
+
+.stella-cb-input-wrap input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.stella-cb-input-wrap input:focus {
+  border-color: var(--stella-brand);
+}
+
+.stella-cb-send-btn {
+  background: var(--stella-brand);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0 16px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.stella-cb-send-btn:hover {
+  background: var(--stella-brand-hover);
+}
+
+/* Suggestions & Categories */
+.stella-cb-suggest {
+  display: inline-block;
+  margin: 4px 4px 0 0;
+  padding: 8px 14px;
+  border: 1px solid var(--stella-brand);
+  background: #fff;
+  color: var(--stella-brand);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.stella-cb-suggest:hover {
+  background: var(--stella-brand);
+  color: #fff;
+}
+
+/* Lead Capture */
+.stella-cb-lead {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  background: #f1f5f9;
+  border-radius: 12px;
+}
+
+.stella-cb-lead input {
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.stella-cb-lead button {
+  padding: 10px;
+  background: var(--stella-brand);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Footer / Credit */
+.stella-cb-credit {
+  padding: 8px;
+  font-size: 11px;
+  text-align: center;
+  color: var(--stella-muted);
+  background: #fff;
+  border-top: 1px solid #f1f5f9;
+}
+
+.stella-cb-credit a {
+  color: var(--stella-brand);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* AI Disclaimer */
+.stella-cb-ai-disclaimer {
+  margin-top: 10px;
+  padding: 10px;
+  background: #fff7ed;
+  border: 1px solid #ffedd5;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #9a3412;
+}
+
+/* Keyframes */
+@keyframes stellaFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes stellaPulse {
+  0%, 100% { transform: scale(1); box-shadow: var(--stella-shadow-lg); }
+  50% { transform: scale(1.05); box-shadow: 0 25px 40px -10px rgba(99, 102, 241, 0.35); }
+}
+
+@keyframes stellaShake {
+  0%, 100% { transform: rotate(0); }
+  10%, 30%, 50%, 70%, 90% { transform: rotate(-5deg); }
+  20%, 40%, 60%, 80% { transform: rotate(5deg); }
+}
+
+@keyframes stellaMessageIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+  .stella-cb-panel {
+    width: calc(100vw - 48px);
+    height: calc(100vh - 120px);
+  }
+}
